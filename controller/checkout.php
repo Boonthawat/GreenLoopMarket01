@@ -4,7 +4,7 @@ $userId = (int) $user['id'];
 $cart = $_SESSION['market_cart'] ?? [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    market_check_csrf('checkout.php');
+    market_check_csrf('shop.php#cartModal');
 
     if (isset($_POST['remove_id'])) {
         $removeId = filter_var($_POST['remove_id'], FILTER_VALIDATE_INT);
@@ -12,12 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($cart[$removeId]);
             $_SESSION['market_cart'] = $cart;
         }
-        go('checkout.php', 'อัปเดตรายการในตะกร้าแล้ว');
+        go('shop.php#cartModal', 'อัปเดตรายการในตะกร้าแล้ว');
     }
 
     if (isset($_POST['update_cart'])) {
         $quantities = $_POST['quantity'] ?? [];
-        if (!is_array($quantities)) go('checkout.php', 'ข้อมูลจำนวนสินค้าไม่ถูกต้อง', 'danger');
+        if (!is_array($quantities)) go('shop.php#cartModal', 'ข้อมูลจำนวนสินค้าไม่ถูกต้อง', 'danger');
         foreach ($quantities as $id => $quantity) {
             $productId = filter_var($id, FILTER_VALIDATE_INT);
             $count = filter_var($quantity, FILTER_VALIDATE_INT);
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $_SESSION['market_cart'] = $cart;
-        go('checkout.php', 'อัปเดตตะกร้าแล้ว');
+        go('shop.php#cartModal', 'อัปเดตตะกร้าแล้ว');
     }
 
     if (isset($_POST['place_order'])) {
@@ -38,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $address = is_string($_POST['shipping_address'] ?? null) ? trim($_POST['shipping_address']) : '';
         $addressLength = preg_match_all('/./us', $address);
         if ($requestedPoints === false || $requestedPoints < 0) {
-            go('checkout.php', 'จำนวน GreenPoints ไม่ถูกต้อง', 'danger');
+            go('shop.php#cartModal', 'จำนวน GreenPoints ไม่ถูกต้อง', 'danger');
         }
         if ($addressLength === false || $addressLength < 5 || $addressLength > 500) {
-            go('checkout.php', 'กรุณากรอกที่อยู่จัดส่ง 5 ถึง 500 ตัวอักษร', 'danger');
+            go('shop.php#cartModal', 'กรุณากรอกที่อยู่จัดส่ง 5 ถึง 500 ตัวอักษร', 'danger');
         }
         if (!$cart) go('index.php', 'ตะกร้าสินค้าว่างเปล่า', 'danger');
 
@@ -53,9 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($cart as $id => $quantity) {
                 $productId = (int) $id;
                 $product = $db->query(
-                    "SELECT p.id, p.name, p.price_thb, p.stock, d.eco_impact
-                     FROM products p JOIN product_details d ON d.product_id = p.id
-                     WHERE p.id = $productId AND p.is_active = 1 FOR UPDATE"
+                    "SELECT id, name, price_thb, stock, eco_impact
+                     FROM products WHERE id = $productId AND is_active = 1 FOR UPDATE"
                 )->fetch_assoc();
                 if (!$product) throw new DomainException('มีสินค้าบางรายการถูกปิดขายแล้ว กรุณาตรวจสอบตะกร้า');
                 $lockedProducts[$productId] = $product;
@@ -79,9 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new DomainException('ใช้ GreenPoints ได้สูงสุด ' . number_format($maxPoints) . ' คะแนน');
             }
 
-            market_ensure_wallet($db, $userId);
-            $walletRow = $db->query("SELECT balance FROM wallets WHERE user_id = $userId FOR UPDATE")->fetch_assoc();
-            $walletCents = (int) round((float) ($walletRow['balance'] ?? 0) * 100);
+            $walletRow = $db->query("SELECT wallet_balance FROM users WHERE id = $userId FOR UPDATE")->fetch_assoc();
+            $walletCents = (int) round((float) ($walletRow['wallet_balance'] ?? 0) * 100);
             $discountCents = $requestedPoints * 10;
             $walletDueCents = $subtotalCents - $discountCents;
             if ($walletCents < $walletDueCents) {
@@ -93,16 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subtotal = market_money($subtotalCents);
             $discount = market_money($discountCents);
             $walletDue = market_money($walletDueCents);
-            $db->query(
-                "INSERT INTO orders (order_number, user_id, subtotal, wallet_paid)
-                 VALUES ('$orderNumberSql', $userId, '$subtotal', '$walletDue')"
-            );
-            $orderId = (int) $db->insert_id;
             $addressSql = $db->real_escape_string($address);
             $db->query(
-                "INSERT INTO order_details (order_id, points_used, discount_amount, shipping_address)
-                 VALUES ($orderId, $requestedPoints, '$discount', '$addressSql')"
+                "INSERT INTO orders
+                    (order_number, user_id, subtotal, wallet_paid, points_used, discount_amount, shipping_address)
+                 VALUES ('$orderNumberSql', $userId, '$subtotal', '$walletDue',
+                    $requestedPoints, '$discount', '$addressSql')"
             );
+            $orderId = (int) $db->insert_id;
 
             foreach ($cart as $id => $quantity) {
                 $productId = (int) $id;
@@ -129,8 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $db->query(
-                "UPDATE wallets SET balance = balance - '$walletDue'
-                 WHERE user_id = $userId AND balance >= '$walletDue'"
+                "UPDATE users SET wallet_balance = wallet_balance - '$walletDue'
+                 WHERE id = $userId AND wallet_balance >= '$walletDue'"
             );
             if ($walletDueCents > 0 && $db->affected_rows !== 1) {
                 throw new DomainException('ยอด Wallet เปลี่ยนแปลง กรุณาลองสั่งซื้อใหม่');
@@ -138,24 +134,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($walletDueCents > 0) {
                 $negativeAmount = '-' . $walletDue;
-                $description = $db->real_escape_string('ชำระคำสั่งซื้อ ' . $orderNumber);
                 $db->query(
-                    "INSERT INTO wallet_transactions (user_id, transaction_type, amount, reference_id, description)
-                     VALUES ($userId, 'purchase', '$negativeAmount', $orderId, '$description')"
+                    "INSERT INTO wallet_transactions (user_id, transaction_type, amount)
+                     VALUES ($userId, 'purchase', '$negativeAmount')"
                 );
             }
 
             $db->commit();
             $transactionStarted = false;
             $_SESSION['market_cart'] = [];
-            go('checkout.php?order=' . urlencode($orderNumber), 'สั่งซื้อสำเร็จ');
+            go('shop.php?order=' . urlencode($orderNumber) . '#cartModal', 'สั่งซื้อสำเร็จ');
         } catch (DomainException $exception) {
             if ($transactionStarted) $db->rollback();
-            go('checkout.php', $exception->getMessage(), 'danger');
+            go('shop.php#cartModal', $exception->getMessage(), 'danger');
         } catch (mysqli_sql_exception $exception) {
             if ($transactionStarted) $db->rollback();
             error_log('Checkout failed: ' . $exception->getMessage());
-            go('checkout.php', 'ชำระเงินไม่สำเร็จ กรุณาลองใหม่', 'danger');
+            go('shop.php#cartModal', 'ชำระเงินไม่สำเร็จ กรุณาลองใหม่', 'danger');
         }
     }
 }
@@ -170,9 +165,8 @@ $orderItems = [];
 if (isset($_GET['order']) && is_string($_GET['order'])) {
     $orderNumberSql = $db->real_escape_string($_GET['order']);
     $order = $db->query(
-        "SELECT o.*, d.points_used, d.discount_amount
-         FROM orders o JOIN order_details d ON d.order_id = o.id
-         WHERE o.order_number = '$orderNumberSql' AND o.user_id = $userId"
+        "SELECT * FROM orders
+         WHERE order_number = '$orderNumberSql' AND user_id = $userId"
     )->fetch_assoc();
     if ($order) {
         $orderId = (int) $order['id'];
@@ -181,25 +175,21 @@ if (isset($_GET['order']) && is_string($_GET['order'])) {
 }
 
 $cart = $_SESSION['market_cart'] ?? [];
-$products = [];
+$cartProducts = [];
 foreach ($cart as $id => $quantity) {
     $productId = (int) $id;
-    $product = $db->query(
-        "SELECT p.*, d.description, d.image_path, d.eco_impact
-         FROM products p JOIN product_details d ON d.product_id = p.id
-         WHERE p.id = $productId"
-    )->fetch_assoc();
-    if ($product) $products[$productId] = $product;
+    $product = $db->query("SELECT * FROM products WHERE id = $productId")->fetch_assoc();
+    if ($product) $cartProducts[$productId] = $product;
 }
 
 $subtotalCents = 0;
 $cartReady = (bool) $cart;
 foreach ($cart as $id => $quantity) {
     $productId = (int) $id;
-    if (!isset($products[$productId]) || !$products[$productId]['is_active'] || (int) $quantity > (int) $products[$productId]['stock']) {
+    if (!isset($cartProducts[$productId]) || !$cartProducts[$productId]['is_active'] || (int) $quantity > (int) $cartProducts[$productId]['stock']) {
         $cartReady = false;
         continue;
     }
-    $subtotalCents += (int) round((float) $products[$productId]['price_thb'] * 100) * (int) $quantity;
+    $subtotalCents += (int) round((float) $cartProducts[$productId]['price_thb'] * 100) * (int) $quantity;
 }
 $maxPoints = max(0, min($availablePoints, intdiv(intdiv($subtotalCents, 2), 10)));

@@ -9,9 +9,9 @@ head("แต้มของฉัน");
         <div class="card card-body mx-auto">
             <b><?= $r['title']?></b>
             <br>
-                <?= $r['messege'] ?>
+                <?= e($r['message']) ?>
             <br>
-            <span><?= $r['created_at'] ? date('d/m/Y H:i') : ''?></span>
+            <span><?= $r['created_at'] ? date('d/m/Y H:i', strtotime($r['created_at'])) : ''?></span>
         </div>
     <?php endforeach; ?>
     <?php if (!$rowNoti): ?>

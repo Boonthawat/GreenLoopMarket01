@@ -34,4 +34,4 @@ $_SESSION['status'] = $user['status'];
 unset($user['password'], $user['answer']);
 $_SESSION['user'] = $user;
 
-go($user['role'] === 'admin' ? '../admin.php' : '../index.php', 'เข้าสู่ระบบแล้ว');
+go($user['role'] === 'admin' ? '../admin/store.php' : '../index.php', 'เข้าสู่ระบบแล้ว');

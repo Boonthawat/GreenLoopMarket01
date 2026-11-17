@@ -1,4 +1,4 @@
 <?php
-$db = new mysqli('localhost' , 'root' , '' ,'gldb');
+$db = new mysqli('localhost', 'root', '', 'greenloopdb');
 // echo 1
 ?>

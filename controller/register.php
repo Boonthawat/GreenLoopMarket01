@@ -24,21 +24,19 @@ if ($name === '' || !$email || !preg_match('/^0[0-9]{9}$/', $phone) || strlen($p
     go('../register.php', 'กรุณาตรวจสอบข้อมูลและรหัสผ่านอีกครั้ง', 'danger');
 }
 
-$existing = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-$existing->bind_param('s', $email);
-$existing->execute();
-$emailExists = $existing->get_result()->fetch_assoc();
-$existing->close();
-if ($emailExists) go('../register.php', 'อีเมลนี้ถูกใช้งานแล้ว', 'danger');
+$db->set_charset('utf8mb4');
+$emailSql = $db->real_escape_string($email);
 
-$statement = $db->prepare(
-    "INSERT INTO users (name, email, phone, points, password, question, answer, role, status)
-     VALUES (?, ?, ?, 0, ?, ?, ?, 'user', 'active')"
-);
 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 $answerHash = password_hash($answer, PASSWORD_DEFAULT);
-$statement->bind_param('ssssss', $name, $email, $phone, $passwordHash, $question, $answerHash);
-$statement->execute();
-$statement->close();
+$nameSql = $db->real_escape_string($name);
+$phoneSql = $db->real_escape_string($phone);
+$passwordHashSql = $db->real_escape_string($passwordHash);
+$questionSql = $db->real_escape_string($question);
+$answerHashSql = $db->real_escape_string($answerHash);
+$db->query(
+    "INSERT INTO users (name, email, phone, points, password, question, answer, role, status)
+     VALUES ('$nameSql', '$emailSql', '$phoneSql', 0, '$passwordHashSql', '$questionSql', '$answerHashSql', 'user', 'active')"
+);
 
 go('../login.php', 'สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');

@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 }
 
 $products = $db->query(
-    'SELECT p.*, d.description, d.image_path, d.eco_impact
-     FROM products p JOIN product_details d ON d.product_id = p.id
-     WHERE p.is_active = 1 ORDER BY p.created_at DESC'
+    'SELECT * FROM products WHERE is_active = 1 ORDER BY created_at DESC'
 )->fetch_all(MYSQLI_ASSOC);
 $cartCount = array_sum($_SESSION['market_cart'] ?? []);
+
+require_once __DIR__ . '/checkout.php';

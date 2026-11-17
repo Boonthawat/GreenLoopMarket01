@@ -3,7 +3,8 @@ function market_require_user(): array
 {
     $user = me();
     if (!$user || $user['status'] !== 'active') {
-        go('login.php', 'กรุณาเข้าสู่ระบบด้วยบัญชีที่ใช้งานได้', 'danger');
+        $prefix = strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false ? '../' : '';
+        go($prefix . 'login.php', 'กรุณาเข้าสู่ระบบด้วยบัญชีที่ใช้งานได้', 'danger');
     }
     return $user;
 }
@@ -12,7 +13,8 @@ function market_require_admin(): array
 {
     $user = market_require_user();
     if ($user['role'] !== 'admin') {
-        go('index.php', 'หน้านี้สำหรับผู้ดูแลระบบเท่านั้น', 'danger');
+        $prefix = strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false ? '../' : '';
+        go($prefix . 'index.php', 'หน้านี้สำหรับผู้ดูแลระบบเท่านั้น', 'danger');
     }
     return $user;
 }
@@ -33,16 +35,10 @@ function market_check_csrf(string $redirect): void
     }
 }
 
-function market_ensure_wallet(mysqli $db, int $userId): void
-{
-    $db->query("INSERT IGNORE INTO wallets (user_id, balance) VALUES ($userId, 0.00)");
-}
-
 function market_wallet_balance(mysqli $db, int $userId): string
 {
-    market_ensure_wallet($db, $userId);
-    $row = $db->query("SELECT balance FROM wallets WHERE user_id = $userId")->fetch_assoc();
-    return $row['balance'] ?? '0.00';
+    $row = $db->query("SELECT wallet_balance FROM users WHERE id = $userId")->fetch_assoc();
+    return $row['wallet_balance'] ?? '0.00';
 }
 
 function market_refresh_points(mysqli $db, int $userId): int

@@ -11,8 +11,11 @@ if(isset($_POST['reject'])){
     go('recycle.php' , 'ปฏิเสธ' , 'danger');
 }
 if(isset($_POST['approved'])){
-    $rId = $_POST['id'];
-    $r = $db->query("SELECT r.*,r.user_id, c.co2_per_kg FROM recycles r JOIN categories c  WHERE status = 'pending'")->fetch_assoc();
+    $rId = (int) $_POST['id'];
+    $r = $db->query("SELECT r.*, c.co2_per_kg FROM recycles r
+        JOIN categories c ON c.id = r.category_id
+        WHERE r.id = $rId AND r.status = 'pending'")->fetch_assoc();
+    if (!$r) go('recycle.php', 'ไม่พบคำขอหรือหมวดหมู่รีไซเคิล', 'danger');
 
     $points = round($r['weight_kg'] * 20);
     $co2 = $r['weight_kg'] * $r['co2_per_kg'];
@@ -23,7 +26,6 @@ if(isset($_POST['approved'])){
 
     $db->query("UPDATE recycles SET points = $points , co2_kg = $co2 , status = 'done' WHERE id = $rId");
     $db->query("UPDATE users SET points = points + $points WHERE  id = $userId");
-    $db->query("INSERT INTO point_transactions (user_id , amount , related_id , related_type , link) VALUES ($userId , $points , $rId , 'รีไซเคิล' , 'recycle.php')");
 
     go('recycle.php' , "ตรวจรับ");
 

@@ -13,9 +13,15 @@ if($_POST){
     $delivery = $_POST['delivery_type'];
     $add = $_POST['address'];
     $weight = $_POST['weight_kg'];
+    $categoryId = filter_var($_POST['category_id'] ?? '', FILTER_VALIDATE_INT);
 
-   $image = upload('image');
-    $db->query("INSERT INTO  recycles (item_name , delivery_type , address , weight_kg , user_id , image) VALUES ('$item' , '$delivery' , '$add' , $weight  , $uId , '$image')");
+    if (!$categoryId || !$db->query("SELECT id FROM categories WHERE id = $categoryId")->num_rows) {
+        go('recycle.php#recycle-form', 'เลือกหมวดหมู่ให้ถูกต้อง', 'danger');
+    }
+
+    $image = upload('image');
+    $db->query("INSERT INTO recycles (item_name, delivery_type, address, weight_kg, user_id, image, category_id)
+        VALUES ('$item', '$delivery', '$add', $weight, $uId, '$image', $categoryId)");
 
     go('recycle.php#recycle-form' , 'ส่งคำขอ');
 }

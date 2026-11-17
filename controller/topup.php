@@ -23,12 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_topup'])) {
 
     $amount = $db->real_escape_string(market_money($amountCents));
     $slipPath = $db->real_escape_string((string) $slipPath);
-    $db->query("INSERT INTO topups (user_id, amount, slip_path) VALUES ($userId, '$amount', '$slipPath')");
+    $db->query(
+        "INSERT INTO wallet_transactions
+            (user_id, transaction_type, amount, slip_path, status)
+         VALUES ($userId, 'topup', '$amount', '$slipPath', 'pending')"
+    );
     go('topup.php', 'ส่งคำขอเติมเงินแล้ว รอผู้ดูแลตรวจสอบ');
 }
 
 $balance = market_wallet_balance($db, $userId);
 $history = $db->query(
     "SELECT amount, slip_path, status, created_at
-     FROM topups WHERE user_id = $userId ORDER BY created_at DESC"
+     FROM wallet_transactions
+     WHERE user_id = $userId AND transaction_type = 'topup'
+     ORDER BY created_at DESC"
 )->fetch_all(MYSQLI_ASSOC);

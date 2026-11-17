@@ -24,8 +24,8 @@ head("แต้มของฉัน");
             <h2 class="fw-bold">เลือกหมวดหมู่และกรอกข้อมูลได้เลย!</h2>
             <small class="text-muted"></small>
             <label for="" class="form-label mt-2">หมวดหมู่</label>
-            <select name="catergory_id" id="recycle-category" class="form-select">
-                <option value="">
+            <select name="category_id" id="recycle-category" class="form-select" required>
+                <option value="" selected disabled>เลือกหมวดหมู่</option>
                     <?php foreach($cats as $c): ?>
                         <option value="<?= $c['id']?>" data-factor="<?= $c['co2_per_kg']?>">
                             <?= $c['name']?> ลดได้ ( <?= $c['co2_per_kg']?> kgCO2e ต่อ กก. )
