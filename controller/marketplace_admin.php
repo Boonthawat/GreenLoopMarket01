@@ -1,8 +1,14 @@
 <?php
 require_once __DIR__ . '/../init.php';
-require_once __DIR__ . '/../lib/marketplace.php';
 
-market_require_admin();
+$user = me();
+$prefix = strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false ? '../' : '';
+if (!$user || $user['status'] !== 'active') {
+    go($prefix . 'login.php', 'กรุณาเข้าสู่ระบบด้วยบัญชีที่ใช้งานได้', 'danger');
+}
+if ($user['role'] !== 'admin') {
+    go($prefix . 'index.php', 'หน้านี้สำหรับผู้ดูแลระบบเท่านั้น', 'danger');
+}
 $metrics = $db->query("SELECT
     (SELECT COALESCE(SUM(wallet_paid), 0) FROM orders) AS sales,
     (SELECT COALESCE(SUM(points_used), 0) FROM orders) AS points,

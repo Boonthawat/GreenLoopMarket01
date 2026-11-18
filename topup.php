@@ -1,6 +1,5 @@
 <?php
 require 'init.php';
-require 'lib/marketplace.php';
 require 'controller/topup.php';
 
 head('เติมเงิน Wallet', true, $balance);
@@ -12,7 +11,7 @@ head('เติมเงิน Wallet', true, $balance);
             <h1 class="h3 text-success">เติมเงินเข้าวอลเล็ต</h1>
             <p class="text-muted">เลือกยอดที่ต้องการและแนบสลิป หลังส่งคำขอเงินจะเข้าบัญชีเมื่อผู้ดูแลอนุมัติ</p>
             <form method="post" enctype="multipart/form-data">
-                <input type="hidden" name="csrf_token" value="<?= e(market_csrf_token())?>">
+                <input type="hidden" name="csrf_token" value="<?= e($csrfToken)?>">
                 <label for="amount" class="form-label">จำนวนเงิน (บาท)</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text">฿</span>

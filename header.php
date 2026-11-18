@@ -34,7 +34,6 @@
                         <a href="admin/store.php" class="nav-link">จัดการร้านค้า</a>
                     <?php elseif($u): ?>
                         <a href="shop.php" class="nav-link">🛍️ ร้านค้า</a>
-                        <a href="shop.php?cart=1" class="nav-link">🛒 ตะกร้า</a>
                         <a href="topup.php" class="nav-link">💳 เติมเงิน</a>
                         <a href="recycle.php" class="nav-link">♻️ รีไซเคิล</a>
                         <a href="points.php" class="nav-link">🏆 แต้มสะสม</a>
