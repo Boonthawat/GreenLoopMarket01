@@ -21,7 +21,15 @@ head('จัดการร้านค้า');
         <td>฿<?= number_format((float) $o['subtotal'] - (float) $o['discount_amount'], 2)?>
             <?php if((int) $o['points_used'] > 0): ?><small class="d-block text-muted">ใช้ <?= (int) $o['points_used']?> แต้ม ลด ฿<?= number_format((float) $o['discount_amount'], 2)?></small><?php endif; ?>
         </td>
-        <td><?php if($o['payment_slip_path']): ?><a href="<?= e($o['payment_slip_path'])?>" target="_blank" rel="noopener">ดูสลิป</a><?php else: ?>-<?php endif; ?></td>
+        <td>
+            <?php if($o['payment_slip_path']): ?>
+                <a href="../<?= e($o['payment_slip_path'])?>" target="_blank" rel="noopener">
+                    <img src="../<?= e($o['payment_slip_path'])?>" alt="สลิปชำระเงิน" style="max-width:90px; max-height:70px; object-fit:cover;">
+                </a>
+            <?php else: ?>
+                -
+            <?php endif; ?>
+        </td>
         <td><?= e($statusLabels[$o['status']] ?? $o['status'])?></td>
         <td>
             <?php if($o['status'] === 'pending_payment'): ?>

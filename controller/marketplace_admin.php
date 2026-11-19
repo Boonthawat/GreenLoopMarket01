@@ -43,9 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_action'])) {
         }
         $userId = (int) $order['user_id'];
         $pointsUsed = (int) $order['points_used'];
-        if ($pointsUsed > 0) {
-            $db->query("UPDATE users SET points = points + $pointsUsed WHERE id = $userId");
-        }
+        $db->query("UPDATE users SET points = points + $pointsUsed WHERE id = $userId");
         $db->query("UPDATE orders SET status = 'payment_rejected' WHERE id = $orderId AND status = 'pending_payment'");
     }
     if ($db->affected_rows !== 1) {

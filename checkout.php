@@ -53,17 +53,17 @@ head('ยืนยันการซื้อ', false);
     const formatBaht = new Intl.NumberFormat('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const updatePayment = () => {
         const quantity = Math.min(maxQuantity, Math.max(1, parseInt(quantityInput.value, 10) || 1));
-        quantityInput.value = quantity;
         const subtotalCents = unitPriceCents * quantity;
         const maxPoints = Math.min(Math.floor(availablePoints / 10) * 10, Math.floor(subtotalCents / 100) * 10);
+        const requestedPoints = Math.max(0, parseInt(pointsInput.value, 10) || 0);
+        const points = Math.min(requestedPoints, maxPoints);
+
+        quantityInput.value = quantity;
         pointsInput.max = maxPoints;
-        let points = Math.max(0, parseInt(pointsInput.value, 10) || 0);
-        if (points > maxPoints) {
-            points = maxPoints;
-            pointsInput.value = points;
-        }
+        if (points < requestedPoints) pointsInput.value = points;
+
         const discountCents = Math.floor(points / 10) * 100;
-        const dueCents = Math.max(0, subtotalCents - discountCents);
+        const dueCents = subtotalCents - discountCents;
         subtotalDisplay.textContent = formatBaht.format(subtotalCents / 100);
         discountDisplay.textContent = formatBaht.format(discountCents / 100);
         paymentTotal.textContent = formatBaht.format(dueCents / 100);
@@ -72,8 +72,7 @@ head('ยืนยันการซื้อ', false);
         paymentInstructions.hidden = dueCents === 0;
         submitOrder.textContent = dueCents > 0 ? 'ส่งคำสั่งซื้อและสลิป' : 'ยืนยันคำสั่งซื้อโดยใช้แต้ม';
     };
-    quantityInput.addEventListener('input', updatePayment);
-    pointsInput.addEventListener('input', updatePayment);
+    [quantityInput, pointsInput].forEach(input => input.addEventListener('input', updatePayment));
     updatePayment();
 </script>
 <?php foot(); ?>
