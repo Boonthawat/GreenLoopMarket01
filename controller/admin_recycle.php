@@ -25,7 +25,7 @@ if ($_POST) {
     $db->query("INSERT INTO point_transactions (user_id, amount, description, related_type, related_id) VALUES ({$r['user_id']}, $points, 'แต้มรีไซเคิล:{$r['item_name']}', 'recycle', $rId)");
     $db->commit();
 
-    go('recycles.php', "สำเร็จ ได้รับ $points แต้ม");
+    go('recycle.php', "สำเร็จ ได้รับ $points แต้ม");
 }
 
 $s = trim($_GET['q'] ?? '');
