@@ -1,5 +1,5 @@
 <?php
-    function head($title , $show = true, $walletBalance = null) {
+    function head($title , $show = true) {
         $u = me();
 ?>
 <!DOCTYPE html>
@@ -34,17 +34,15 @@
                         <a href="admin/store.php" class="nav-link">จัดการร้านค้า</a>
                     <?php elseif($u): ?>
                         <a href="shop.php" class="nav-link">🛍️ ร้านค้า</a>
-                        <a href="topup.php" class="nav-link">💳 เติมเงิน</a>
                         <a href="recycle.php" class="nav-link">♻️ รีไซเคิล</a>
                         <a href="points.php" class="nav-link">🏆 แต้มสะสม</a>
                         <a href="profile.php" class="nav-link">🫂 โปรไฟล์</a>
                     <?php endif; ?>
                 </div>
                 <div class="navbar-nav align-items-lg-center">
-                    <?php if($u && $walletBalance !== null): ?>
+                    <?php if($u): ?>
                         <span class="navbar-text text-white small me-lg-3">
-                            Wallet ฿<?= number_format((float) $walletBalance, 2)?>
-                            · <?= number_format((int) $u['points'])?> GreenPoints
+                            <?= number_format((int) $u['points'])?> GreenPoints
                         </span>
                     <?php endif; ?>
                     <?php if(!$u): ?>

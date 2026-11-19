@@ -6,7 +6,5 @@ if(!$admin) go('../login.php' , 'เข้าสู่ระบบก่อน' 
 if($admin['role'] !== 'admin') go('../index.php' , 'สำหรับแอดมิน' , 'danger');
 
 $adminId = (int) $admin['id'];
-$rowNoti = $db->query(
-    "SELECT title, message, created_at FROM notifications
-     WHERE user_id = $adminId ORDER BY id DESC"
-)->fetch_all(MYSQLI_ASSOC);
+$db->query("UPDATE notifications SET is_read = 1 WHERE (user_id = $adminId OR user_id IS NULL) AND title = 'สมาชิกใหม่' AND is_read = 0");
+$rows = $db->query("SELECT title, message, created_at FROM notifications WHERE (user_id = $adminId OR user_id IS NULL) AND title = 'สมาชิกใหม่' ORDER BY id DESC")->fetch_all(MYSQLI_ASSOC);

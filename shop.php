@@ -1,10 +1,10 @@
 <?php
 require 'init.php';
 require 'controller/shop.php';
-head('ร้านค้า GreenLoop', false, $walletBalance);
+head('ร้านค้า GreenLoop', false);
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div><h1 class="h2 text-success">สินค้ารักษ์โลก</h1><p class="text-muted mb-0">เลือกจำนวนและกรอกที่อยู่ แล้วซื้อได้ทันทีจาก Wallet</p></div>
+    <div><h1 class="h2 text-success">สินค้ารักษ์โลก</h1><p class="text-muted mb-0">เลือกสินค้า ชำระผ่าน PromptPay และแนบสลิปเพื่อรอแอดมินตรวจสอบ</p></div>
 </div>
 <div class="row g-3">
     <?php foreach($products as $product): ?>

@@ -339,7 +339,8 @@ CREATE TABLE `orders` (
   `points_used` int(11) NOT NULL DEFAULT 0,
   `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `shipping_address` varchar(500) NOT NULL,
-  `status` enum('processing','shipped','delivered') NOT NULL DEFAULT 'processing',
+  `status` enum('pending_payment','processing','shipped','delivered','payment_rejected') NOT NULL DEFAULT 'pending_payment',
+  `payment_slip_path` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `orders_number_unique` (`order_number`),
@@ -359,20 +360,6 @@ CREATE TABLE `order_items` (
   KEY `order_items_order_idx` (`order_id`),
   CONSTRAINT `order_items_order_fk` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_product_fk` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `wallet_transactions` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `transaction_type` enum('topup','purchase') NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `slip_path` varchar(255) DEFAULT NULL,
-  `status` enum('pending','approved','rejected') DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `wallet_transactions_user_created_idx` (`user_id`, `created_at`),
-  KEY `wallet_transactions_type_status_created_idx` (`transaction_type`, `status`, `created_at`),
-  CONSTRAINT `wallet_transactions_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `products` (`id`, `name`, `price_thb`, `stock`, `description`, `eco_impact`) VALUES

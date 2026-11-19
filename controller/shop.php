@@ -9,9 +9,6 @@ $pointsRow = $db->query("SELECT points FROM users WHERE id = $userId")->fetch_as
 $user['points'] = (int) ($pointsRow['points'] ?? 0);
 $_SESSION['user']['points'] = $user['points'];
 
-$wallet = $db->query("SELECT wallet_balance FROM users WHERE id = $userId")->fetch_assoc();
-$walletBalance = $wallet['wallet_balance'] ?? '0.00';
-
 $products = $db->query(
     'SELECT * FROM products WHERE is_active = 1 ORDER BY created_at DESC'
 )->fetch_all(MYSQLI_ASSOC);

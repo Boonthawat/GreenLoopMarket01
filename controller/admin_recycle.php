@@ -1,40 +1,37 @@
 <?php
 require_once __DIR__ . '/../init.php';
-
 $admin = me();
-if(!$admin) go('../login.php' , 'เข้าสู่ระบบก่อน' , 'danger');
-if($admin['role'] !== 'admin') go('../index.php' , 'สำหรับแอดมิน' , 'danger');
- 
-if(isset($_POST['reject'])){
-    $rId = $_POST['id'];
-    $db->query("UPDATE recycles SET status = 'rejected' WHERE id = $rId");
-    go('recycle.php' , 'ปฏิเสธ' , 'danger');
-}
-if(isset($_POST['approved'])){
-    $rId = (int) $_POST['id'];
-    $r = $db->query("SELECT r.*, c.co2_per_kg FROM recycles r
-        JOIN categories c ON c.id = r.category_id
-        WHERE r.id = $rId AND r.status = 'pending'")->fetch_assoc();
-    if (!$r) go('recycle.php', 'ไม่พบคำขอหรือหมวดหมู่รีไซเคิล', 'danger');
+if (!$admin) go('../login.php', 'กรุณาล็อกอิน', 'warning');
+if ($admin['role'] !== 'admin') go('../index.php', 'สำหรับแอดมิน', 'danger');
 
-    $points = round($r['weight_kg'] * 20);
-    $co2 = $r['weight_kg'] * $r['co2_per_kg'];
-    $userId = (int) $r['user_id'];
-    // var_dump($userId); exit;
+if ($_POST) {
+    $db->begin_Transaction();
+    $rId = (int) ($_POST['id'] ?? 0);
 
+    $r = $db->query("SELECT r.*, c.co2_per_kg FROM recycles r JOIN categories c ON c.id = r.category_id WHERE r.id = $rId AND r.status = 'pending' FOR UPDATE")->fetch_assoc();
 
+    if (isset($_POST['rejected'])) {
+        $db->query("UPDATE recycles SET status = 'rejected' WHERE id = $rId");
+        $db->commit();
+        go('recycles.php', 'ปฏิเสธเรียบร้อย', 'warning');
+    }
 
-    $db->query("UPDATE recycles SET points = $points , co2_kg = $co2 , status = 'done' WHERE id = $rId");
-    $db->query("UPDATE users SET points = points + $points WHERE  id = $userId");
+    $kg = (float) $r['weight_kg'];
+    $points = (int) round($kg * 20);
+    $co2 = $kg * (float) $r['co2_per_kg'];
 
-    go('recycle.php' , "ตรวจรับ");
+    $db->query("UPDATE recycles SET status = 'done', points = $points, co2_kg = $co2 WHERE id = $rId");
+    $db->query("UPDATE users SET points = points + $points WHERE id = {$r['user_id']}");
+    $db->query("INSERT INTO point_transactions (user_id, amount, description, related_type, related_id) VALUES ({$r['user_id']}, $points, 'แต้มรีไซเคิล:{$r['item_name']}', 'recycle', $rId)");
+    $db->commit();
 
+    go('recycles.php', "สำเร็จ ได้รับ $points แต้ม");
 }
 
-$row = $db->query("SELECT r.id , r.delivery_type , r.address , r.weight_kg , r.image , r.item_name ,r.status , u.name AS member FROM recycles r 
-JOIN users u ON u.id = r.user_id ORDER BY r.id DESC")->fetch_all(MYSQLI_ASSOC);
+$s = trim($_GET['q'] ?? '');
+$status = trim($_GET['status'] ?? '');
 
-
-// var_dump($row);exit;
-
-?>
+$rows = $db->query("SELECT r.id, r.item_name, r.image, r.weight_kg, r.delivery_type, r.address, r.status, u.name AS member
+    FROM recycles r JOIN users u ON u.id = r.user_id
+    WHERE (r.item_name LIKE '%$s%' OR u.name LIKE '%$s%') AND ('$status' = '' OR r.status = '$status')
+    ORDER BY r.id DESC")->fetch_all(MYSQLI_ASSOC);

@@ -18,22 +18,20 @@ head("user");
         </thead>
         <tbody>
             <?php foreach($row as $r): ?>
-                <tr>
-                    <td><?= e($r['name'])?></td>
-                    <td><?= e($r['phone'])?></td>
-                    <td><?= e($r['points'])?></td>
-                    <td><?= $r['status'] == 'active' ? 'ใช้งานอยู่' : 'ระงับสิทธ์'?></td>
-                    <td>
-                        <form action="" method="post">
-                            <input type="hidden" name="id" value="<?= $r['id']?>">
-                            <button value="1" name='sus' class="btn btn-sm btn-danger">ระงับสิทธ์</button>
-                        </form>
-                        <form action="" method="post" class="mt-2">
-                            <input type="hidden" name="2" value="<?= $r['id']?>">
-                            <button value="2"  name='unsus'class="btn btn-sm btn-outline-success">ยกเลิกการระงับสิทธ์</button>
-                        </form>
-                    </td>
-                </tr>
+                 <tr>
+                                    <td><?= e($r['name'])?></td>
+                                    <td><?= $r['points']?></td>
+                                    <td><?= e($r['phone'])?></td>
+                                    <td><?= $r['status'] === 'active' ? 'ใช้งานได้' : 'ระงับสิทธ์' ?></td>
+                                    <td>
+                                        <form method="post" onsubmit="return confirm('ยืนยันเปลี่ยนสถานะ?')">
+                                            <input type="hidden" name="id" value="<?= $r['id']?>">
+                                            <button class="btn btn-sm btn-outline-<?=$r['status'] == 'active' ? 'danger' : 'success'?>" name="toggle_status">
+                                                <?= $r['status'] == 'active' ? 'ระงับสิทธ์' : 'ยกเลิกระงับสิทธ์' ?>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
