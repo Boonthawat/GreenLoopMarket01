@@ -22,6 +22,10 @@ if ($_POST && isset($_POST['buy_now'])) {
     $unitPriceCents = (int) round((float) $product['price_thb'] * 100);
     $subtotalCents = $unitPriceCents * $quantity;
     $maxPoints = min(intdiv((int) $account['points'], 10), intdiv($subtotalCents, 100)) * 10;
+    if ($pointsUsed > $maxPoints) {
+        $db->rollback();
+        go('checkout.php?product=' . $productId, 'แต้มไม่พอหรือใช้เกินยอดที่ลดได้', 'danger');
+    }
 
     $discountCents = $pointsUsed * 10;
     $amountDueCents = $subtotalCents - $discountCents;
@@ -39,7 +43,14 @@ if ($_POST && isset($_POST['buy_now'])) {
     $price = number_format($unitPriceCents / 100, 2, '.', '');
     $db->query("INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, eco_impact) VALUES ($orderId, $productId, '$name', $quantity, '$price', '$impact')");
     $db->query("UPDATE products SET stock = stock - $quantity WHERE id = $productId AND stock >= $quantity");
-    
+    if ($pointsUsed > 0) {
+        $db->query("UPDATE users SET points = points - $pointsUsed WHERE id = $uId AND points >= $pointsUsed");
+        if ($db->affected_rows !== 1) {
+            $db->rollback();
+            go('checkout.php?product=' . $productId, 'แต้มเปลี่ยนแปลง กรุณาทำรายการใหม่', 'danger');
+        }
+    }
+
     $db->commit();
     go('shop.php', 'เลขที่ ' . $orderNumber);
 }
